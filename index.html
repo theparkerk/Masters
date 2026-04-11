@@ -285,6 +285,10 @@
     <div class="label">P&amp;L</div>
     <div class="value neutral" id="pnl">$0.00</div>
   </div>
+  <div class="summary-item">
+    <div class="label">Expected</div>
+    <div class="value neutral" id="expectedPnl">$0.00</div>
+  </div>
 </div>
 
 <div class="live-summary" id="liveSummary"></div>
@@ -518,6 +522,7 @@ function render() {
 
   let wins = 0, losses = 0, pushes = 0, pnl = 0;
   let liveWinning = 0, liveLosing = 0, liveTied = 0, liveWaiting = 0;
+  let expectedPnl = 0;
 
   matchups.forEach((bet, i) => {
     const status = statuses[i];
@@ -528,11 +533,11 @@ function render() {
     const my = liveScores[bet.golfer] || { score: null, thru: null };
     const opp = liveScores[bet.opponent] || { score: null, thru: null };
 
-    // Count live matchup status
+    // Count live matchup status and expected payout
     if (my.score !== null && opp.score !== null) {
-      if (my.score < opp.score) liveWinning++;
-      else if (my.score > opp.score) liveLosing++;
-      else liveTied++;
+      if (my.score < opp.score)      { liveWinning++; expectedPnl += bet.win; }
+      else if (my.score > opp.score) { liveLosing++;  expectedPnl -= bet.risk; }
+      else                           { liveTied++; }
     } else {
       liveWaiting++;
     }
@@ -612,6 +617,11 @@ function render() {
       <div class="ls-label">Waiting</div>
     </div>
   `;
+
+  // Expected payout based on current standings
+  const expEl = document.getElementById("expectedPnl");
+  expEl.textContent = (expectedPnl >= 0 ? "+$" : "-$") + Math.abs(expectedPnl).toFixed(2);
+  expEl.className = "value " + (expectedPnl > 0 ? "positive" : expectedPnl < 0 ? "negative" : "neutral");
 
   document.getElementById("record").textContent =
     `${wins}-${losses}` + (pushes ? `-${pushes}P` : "");
