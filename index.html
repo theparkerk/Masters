@@ -91,26 +91,23 @@
     margin-bottom: 14px;
     overflow: hidden;
     box-shadow: 0 3px 12px rgba(0,0,0,0.3);
-    transition: transform 0.15s;
   }
-
-  .bet-card:hover { transform: translateY(-2px); }
 
   .bet-card .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 16px 8px;
+    padding: 12px 16px 4px;
   }
 
   .bet-card .golfer-name {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: bold;
     color: #0d4f0d;
   }
 
   .bet-card .odds {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: bold;
     padding: 3px 10px;
     border-radius: 20px;
@@ -123,10 +120,56 @@
     color: #e65100;
   }
 
+  .matchup-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    gap: 10px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+  }
+
+  .matchup-player {
+    flex: 1;
+    text-align: center;
+  }
+
+  .matchup-player .mp-name {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .matchup-player .mp-score {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-top: 2px;
+  }
+
+  .matchup-player .mp-score.winning { color: #2e7d32; }
+  .matchup-player .mp-score.losing  { color: #c62828; }
+  .matchup-player .mp-score.tied    { color: #f57f17; }
+
+  .matchup-player .mp-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: #999;
+    letter-spacing: 0.5px;
+  }
+
+  .matchup-vs-badge {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #999;
+    padding: 0 4px;
+  }
+
   .bet-card .card-body {
     display: flex;
     justify-content: space-between;
-    padding: 4px 16px 14px;
+    padding: 8px 16px 10px;
     gap: 12px;
   }
 
@@ -136,14 +179,14 @@
   }
 
   .bet-card .stat .stat-label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     color: #888;
     letter-spacing: 0.5px;
   }
 
   .bet-card .stat .stat-value {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     font-weight: bold;
     color: #333;
     margin-top: 2px;
@@ -155,12 +198,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 16px;
-    font-size: 0.85rem;
+    padding: 8px 16px;
+    font-size: 0.8rem;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
-    gap: 8px;
+    gap: 6px;
   }
 
   .status-bar.pending  { background: #f5f5f5; color: #757575; }
@@ -180,7 +223,7 @@
   .status-btns {
     display: flex;
     gap: 6px;
-    padding: 0 16px 12px;
+    padding: 0 16px 10px;
     justify-content: center;
   }
 
@@ -204,12 +247,6 @@
   .status-btns .btn-won     { background: #4caf50; color: #fff; }
   .status-btns .btn-lost    { background: #f44336; color: #fff; }
   .status-btns .btn-push    { background: #ff9800; color: #fff; }
-
-  .bet-card .matchup-vs {
-    font-size: 0.8rem;
-    color: #999;
-    padding: 0 16px 6px;
-  }
 
   .footer {
     text-align: center;
@@ -261,9 +298,6 @@
 </div>
 
 <script>
-// =============================================
-// FIREBASE CONFIG - PASTE YOUR CONFIG HERE
-// =============================================
 const firebaseConfig = {
   apiKey: "AIzaSyAOe3gjE4xHbL6Px_TzfHI0GbCEQsTTfhA",
   authDomain: "masters-2ef60.firebaseapp.com",
@@ -273,30 +307,27 @@ const firebaseConfig = {
   messagingSenderId: "680427486559",
   appId: "1:680427486559:web:8ab722fcb6a299d44e8aea"
 };
-// =============================================
 
 const defaultBets = [
-  { golfer: "M Homa",       opponent: "Matchup 7328", odds: "+100",  risk: 25.00, win: 25.00,  status: "pending" },
-  { golfer: "L Aberg",      opponent: "Matchup 7329", odds: "+160",  risk: 50.00, win: 80.00,  status: "pending" },
-  { golfer: "C Young",      opponent: "Matchup 7336", odds: "+105",  risk: 50.00, win: 52.50,  status: "pending" },
-  { golfer: "B Koepka",     opponent: "Matchup 7339", odds: "-110",  risk: 50.00, win: 45.45,  status: "pending" },
-  { golfer: "J Day",        opponent: "Matchup 7341", odds: "-120",  risk: 50.00, win: 41.67,  status: "pending" },
-  { golfer: "S Lowry",      opponent: "Matchup 7346", odds: "+105",  risk: 75.00, win: 78.75,  status: "pending" },
-  { golfer: "T Fleetwood",  opponent: "Matchup 7350", odds: "-110",  risk: 50.00, win: 45.45,  status: "pending" },
-  { golfer: "P Reed",       opponent: "Matchup 7347", odds: "-135",  risk: 50.00, win: 37.04,  status: "pending" }
+  { golfer: "M Homa",       opponent: "TBD",          odds: "+100",  risk: 25.00, win: 25.00,  status: "pending", myScore: 70, oppScore: null },
+  { golfer: "L Aberg",      opponent: "TBD",          odds: "+160",  risk: 50.00, win: 80.00,  status: "pending", myScore: 70, oppScore: null },
+  { golfer: "C Young",      opponent: "TBD",          odds: "+105",  risk: 50.00, win: 52.50,  status: "pending", myScore: 67, oppScore: null },
+  { golfer: "B Koepka",     opponent: "C Gotterup",   odds: "-110",  risk: 50.00, win: 45.45,  status: "push",    myScore: 69, oppScore: 69 },
+  { golfer: "J Day",        opponent: "T Hatton",     odds: "-120",  risk: 50.00, win: 41.67,  status: "lost",    myScore: 71, oppScore: 66 },
+  { golfer: "S Lowry",      opponent: "J Rose",       odds: "+105",  risk: 75.00, win: 78.75,  status: "push",    myScore: 69, oppScore: 69 },
+  { golfer: "T Fleetwood",  opponent: "R McIlroy",    odds: "-110",  risk: 50.00, win: 45.45,  status: "lost",    myScore: 68, oppScore: 65 },
+  { golfer: "P Reed",       opponent: "S Burns",      odds: "-135",  risk: 50.00, win: 37.04,  status: "won",     myScore: 69, oppScore: 71 }
 ];
 
 let bets = defaultBets.map(b => ({...b}));
 let db = null;
 let betsRef = null;
 
-// Initialize Firebase
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.database();
-  betsRef = db.ref("masters2026/statuses");
+  betsRef = db.ref("masters2026/bets");
 
-  // Monitor connection state
   db.ref(".info/connected").on("value", (snap) => {
     const el = document.getElementById("connStatus");
     if (snap.val() === true) {
@@ -308,30 +339,32 @@ try {
     }
   });
 
-  // Listen for real-time status changes
   betsRef.on("value", (snapshot) => {
     const data = snapshot.val();
     if (data) {
       bets.forEach((bet, i) => {
-        if (data[i] !== undefined) {
-          bet.status = data[i];
+        if (data[i]) {
+          if (data[i].status !== undefined) bet.status = data[i].status;
+          if (data[i].myScore !== undefined) bet.myScore = data[i].myScore;
+          if (data[i].oppScore !== undefined) bet.oppScore = data[i].oppScore;
         }
       });
     }
     render();
   });
 
-  // Seed default data if none exists
   betsRef.once("value", (snapshot) => {
     if (!snapshot.exists()) {
-      const statuses = {};
-      defaultBets.forEach((b, i) => { statuses[i] = b.status; });
-      betsRef.set(statuses);
+      const seed = {};
+      defaultBets.forEach((b, i) => {
+        seed[i] = { status: b.status, myScore: b.myScore, oppScore: b.oppScore };
+      });
+      betsRef.set(seed);
     }
   });
 
 } catch(e) {
-  console.warn("Firebase init failed, using local-only mode:", e);
+  console.warn("Firebase init failed:", e);
   document.getElementById("connStatus").textContent = "Local Only";
   render();
 }
@@ -339,7 +372,7 @@ try {
 function setStatus(index, status) {
   bets[index].status = status;
   if (betsRef) {
-    betsRef.child(String(index)).set(status);
+    betsRef.child(String(index)).update({ status: status });
   } else {
     render();
   }
@@ -364,26 +397,32 @@ function render() {
       push: "Push"
     }[bet.status];
 
+    const myS = bet.myScore;
+    const opS = bet.oppScore;
+    let myClass = "tied", opClass = "tied";
+    if (myS !== null && opS !== null) {
+      if (myS < opS)      { myClass = "winning"; opClass = "losing"; }
+      else if (myS > opS) { myClass = "losing";  opClass = "winning"; }
+    }
+
     const card = document.createElement("div");
     card.className = "bet-card";
     card.innerHTML = `
       <div class="card-header">
-        <span class="golfer-name">${bet.golfer}</span>
-        <span class="odds ${isFav ? 'favorite' : ''}">${bet.odds}</span>
+        <span class="golfer-name">${bet.golfer} <span style="font-size:0.75rem;color:#888">${bet.odds}</span></span>
+        <span class="odds ${isFav ? 'favorite' : ''}" style="font-size:0.8rem">Risk $${bet.risk.toFixed(0)} / Win $${bet.win.toFixed(2)}</span>
       </div>
-      <div class="matchup-vs">${bet.opponent}</div>
-      <div class="card-body">
-        <div class="stat">
-          <div class="stat-label">Risk</div>
-          <div class="stat-value risk">$${bet.risk.toFixed(2)}</div>
+      <div class="matchup-row">
+        <div class="matchup-player">
+          <div class="mp-label">Your Pick</div>
+          <div class="mp-name">${bet.golfer}</div>
+          <div class="mp-score ${myClass}">${myS !== null ? myS : '-'}</div>
         </div>
-        <div class="stat">
-          <div class="stat-label">To Win</div>
-          <div class="stat-value">$${bet.win.toFixed(2)}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Net if Win</div>
-          <div class="stat-value" style="color:#2e7d32">+$${bet.win.toFixed(2)}</div>
+        <div class="matchup-vs-badge">VS</div>
+        <div class="matchup-player">
+          <div class="mp-label">Opponent</div>
+          <div class="mp-name">${bet.opponent}</div>
+          <div class="mp-score ${opClass}">${opS !== null ? opS : '-'}</div>
         </div>
       </div>
       <div class="status-bar ${bet.status}">
