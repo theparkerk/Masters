@@ -80,6 +80,50 @@
   .summary-item .value.negative { color: #f44336; }
   .summary-item .value.neutral  { color: #f4c542; }
 
+  .live-summary {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 20px;
+    background: #083308;
+    border-bottom: 1px solid #1a5c1a;
+  }
+
+  .live-summary .ls-item {
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 8px;
+    min-width: 70px;
+  }
+
+  .live-summary .ls-item .ls-count {
+    font-size: 1.4rem;
+    font-weight: bold;
+  }
+
+  .live-summary .ls-item .ls-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 1px;
+  }
+
+  .ls-item.winning  { background: rgba(76,175,80,0.2); }
+  .ls-item.winning .ls-count { color: #4caf50; }
+  .ls-item.winning .ls-label { color: #81c784; }
+
+  .ls-item.losing   { background: rgba(244,67,54,0.2); }
+  .ls-item.losing .ls-count  { color: #f44336; }
+  .ls-item.losing .ls-label  { color: #ef9a9a; }
+
+  .ls-item.tied     { background: rgba(255,152,0,0.2); }
+  .ls-item.tied .ls-count    { color: #ff9800; }
+  .ls-item.tied .ls-label    { color: #ffcc80; }
+
+  .ls-item.waiting  { background: rgba(255,255,255,0.05); }
+  .ls-item.waiting .ls-count { color: #888; }
+  .ls-item.waiting .ls-label { color: #666; }
+
   .container {
     max-width: 800px;
     margin: 0 auto;
@@ -242,6 +286,8 @@
     <div class="value neutral" id="pnl">$0.00</div>
   </div>
 </div>
+
+<div class="live-summary" id="liveSummary"></div>
 
 <div class="container">
   <div class="last-update" id="lastUpdate">Fetching live scores...</div>
@@ -471,12 +517,24 @@ function render() {
   }
 
   let wins = 0, losses = 0, pushes = 0, pnl = 0;
+  let liveWinning = 0, liveLosing = 0, liveTied = 0, liveWaiting = 0;
 
   matchups.forEach((bet, i) => {
     const status = statuses[i];
     if (status === "won")  { wins++;   pnl += bet.win; }
     if (status === "lost") { losses++; pnl -= bet.risk; }
     if (status === "push") { pushes++; }
+
+    // Count live matchup status
+    const my = liveScores[bet.golfer] || { score: null, thru: null };
+    const opp = liveScores[bet.opponent] || { score: null, thru: null };
+    if (my.score !== null && opp.score !== null) {
+      if (my.score < opp.score) liveWinning++;
+      else if (my.score > opp.score) liveLosing++;
+      else liveTied++;
+    } else {
+      liveWaiting++;
+    }
 
     const my = liveScores[bet.golfer] || { score: null, thru: null };
     const opp = liveScores[bet.opponent] || { score: null, thru: null };
@@ -536,6 +594,26 @@ function render() {
     `;
     container.appendChild(card);
   });
+
+  // Live summary bar
+  document.getElementById("liveSummary").innerHTML = `
+    <div class="ls-item winning">
+      <div class="ls-count">${liveWinning}</div>
+      <div class="ls-label">Winning</div>
+    </div>
+    <div class="ls-item losing">
+      <div class="ls-count">${liveLosing}</div>
+      <div class="ls-label">Losing</div>
+    </div>
+    <div class="ls-item tied">
+      <div class="ls-count">${liveTied}</div>
+      <div class="ls-label">Tied</div>
+    </div>
+    <div class="ls-item waiting">
+      <div class="ls-count">${liveWaiting}</div>
+      <div class="ls-label">Waiting</div>
+    </div>
+  `;
 
   document.getElementById("record").textContent =
     `${wins}-${losses}` + (pushes ? `-${pushes}P` : "");
