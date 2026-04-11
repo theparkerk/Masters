@@ -37,15 +37,19 @@
     margin-top: 4px;
   }
 
-  .connection-status {
-    font-size: 0.7rem;
+  .live-badge {
+    display: inline-block;
+    font-size: 0.65rem;
     margin-top: 6px;
     letter-spacing: 1px;
     text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 10px;
   }
 
-  .connection-status.connected { color: #81c784; }
-  .connection-status.disconnected { color: #ef9a9a; }
+  .live-badge.connected { background: #2e7d32; color: #fff; }
+  .live-badge.disconnected { background: #c62828; color: #fff; }
+  .live-badge.fetching { background: #f57f17; color: #fff; }
 
   .summary-bar {
     display: flex;
@@ -80,6 +84,13 @@
     max-width: 800px;
     margin: 0 auto;
     padding: 20px 16px;
+  }
+
+  .last-update {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #6a9f6a;
+    margin-bottom: 12px;
   }
 
   .bet-card {
@@ -133,13 +144,13 @@
   }
 
   .matchup-player .mp-score {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: bold;
     margin-top: 2px;
   }
 
   .matchup-player .mp-thru {
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     color: #999;
     margin-top: 1px;
   }
@@ -179,56 +190,23 @@
   .status-bar.won      { background: #4caf50; color: #fff; }
   .status-bar.lost     { background: #f44336; color: #fff; }
   .status-bar.push     { background: #ff9800; color: #fff; }
+  .status-bar.not_started { background: #e3f2fd; color: #1565c0; }
 
   .status-bar .status-dot {
     width: 8px; height: 8px; border-radius: 50%;
   }
 
-  .status-bar.pending .status-dot  { background: #bbb; }
-  .status-bar.won .status-dot      { background: #a5d6a7; }
-  .status-bar.lost .status-dot     { background: #ef9a9a; }
-  .status-bar.push .status-dot     { background: #ffe0b2; }
-
-  .status-btns {
-    display: flex;
-    gap: 6px;
-    padding: 0 16px 10px;
-    justify-content: center;
-  }
-
-  .status-btns button {
-    border: none;
-    padding: 5px 14px;
-    border-radius: 16px;
-    font-size: 0.72rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-
-  .status-btns button:hover { opacity: 0.85; transform: scale(1.05); }
-  .status-btns button.active { opacity: 1; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
-
-  .status-btns .btn-pending { background: #e0e0e0; color: #555; }
-  .status-btns .btn-won     { background: #4caf50; color: #fff; }
-  .status-btns .btn-lost    { background: #f44336; color: #fff; }
-  .status-btns .btn-push    { background: #ff9800; color: #fff; }
+  .status-bar.pending .status-dot    { background: #bbb; }
+  .status-bar.won .status-dot        { background: #a5d6a7; }
+  .status-bar.lost .status-dot       { background: #ef9a9a; }
+  .status-bar.push .status-dot       { background: #ffe0b2; }
+  .status-bar.not_started .status-dot { background: #90caf9; }
 
   .footer {
     text-align: center;
     padding: 20px;
     color: #5a8f5a;
     font-size: 0.8rem;
-  }
-
-  .tee-time {
-    font-size: 0.7rem;
-    color: #aaa;
-    text-align: center;
-    padding: 4px 16px 0;
   }
 
   @media (max-width: 480px) {
@@ -243,7 +221,7 @@
 <header>
   <h1>The Masters 2026</h1>
   <div class="subtitle">Round 3 Matchup Bets &mdash; Sat 4/11</div>
-  <div class="connection-status disconnected" id="connStatus">Connecting...</div>
+  <div class="live-badge disconnected" id="liveBadge">Connecting...</div>
 </header>
 
 <div class="summary-bar">
@@ -266,11 +244,12 @@
 </div>
 
 <div class="container">
+  <div class="last-update" id="lastUpdate">Fetching live scores...</div>
   <div id="bets"></div>
 </div>
 
 <div class="footer">
-  All bets placed 4/10/2026 @ 8:56 PM &bull; BetDiablo
+  All bets placed 4/10/2026 @ 8:56 PM &bull; BetDiablo &bull; Scores auto-refresh every 30s
 </div>
 
 <script>
@@ -284,52 +263,85 @@ const firebaseConfig = {
   appId: "1:680427486559:web:8ab722fcb6a299d44e8aea"
 };
 
-const defaultBets = [
-  {
-    golfer: "M Homa", odds: "+100", risk: 25.00, win: 25.00, status: "pending", teeTime: "12:05 PM",
-    opponents: [{ name: "R Gerard", score: null, thru: null }],
-    myScore: null, myThru: null
-  },
-  {
-    golfer: "L Aberg", odds: "+160", risk: 50.00, win: 80.00, status: "pending", teeTime: "12:16 PM",
-    opponents: [{ name: "S Scheffler", score: null, thru: null }],
-    myScore: null, myThru: null
-  },
-  {
-    golfer: "C Young", odds: "+105", risk: 50.00, win: 52.50, status: "pending", teeTime: "1:11 PM",
-    opponents: [{ name: "X Schauffele", score: null, thru: null }],
-    myScore: null, myThru: null
-  },
-  {
-    golfer: "B Koepka", odds: "-110", risk: 50.00, win: 45.45, status: "pending", teeTime: "10:33 AM",
-    opponents: [{ name: "C Gotterup", score: null, thru: null }],
-    myScore: null, myThru: null
-  },
-  {
-    golfer: "J Day", odds: "-120", risk: 50.00, win: 41.67, status: "pending", teeTime: "10:55 AM",
-    opponents: [{ name: "T Hatton", score: null, thru: null }],
-    myScore: null, myThru: null
-  },
-  {
-    golfer: "S Lowry", odds: "+105", risk: 75.00, win: 78.75, status: "pending", teeTime: "11:28 AM",
-    opponents: [{ name: "J Rose", score: null, thru: null }],
-    myScore: null, myThru: null
-  },
-  {
-    golfer: "T Fleetwood", odds: "-110", risk: 50.00, win: 45.45, status: "pending", teeTime: "11:28 AM",
-    opponents: [{ name: "R McIlroy", score: null, thru: null }],
-    myScore: null, myThru: null
-  },
-  {
-    golfer: "P Reed", odds: "-135", risk: 50.00, win: 37.04, status: "pending", teeTime: "11:39 AM",
-    opponents: [{ name: "S Burns", score: null, thru: null }],
-    myScore: null, myThru: null
-  }
+// Augusta National par for each hole
+const PAR = [4,5,4,3,4,3,4,5,4, 4,4,3,5,4,5,3,4,4]; // holes 1-18
+
+// Player name mappings: display name -> possible names in masters.com feed
+const PLAYER_LOOKUP = {
+  "M Homa":       ["Max Homa", "Homa"],
+  "L Aberg":      ["Ludvig Åberg", "Ludvig Aberg", "Åberg", "Aberg"],
+  "C Young":      ["Cameron Young", "Young"],
+  "B Koepka":     ["Brooks Koepka", "Koepka"],
+  "J Day":        ["Jason Day", "Day"],
+  "S Lowry":      ["Shane Lowry", "Lowry"],
+  "T Fleetwood":  ["Tommy Fleetwood", "Fleetwood"],
+  "P Reed":       ["Patrick Reed", "Reed"],
+  "R Gerard":     ["Robert Gerard", "Bob Gerard", "Gerard"],
+  "S Scheffler":  ["Scottie Scheffler", "Scheffler"],
+  "X Schauffele": ["Xander Schauffele", "Schauffele"],
+  "C Gotterup":   ["Chris Gotterup", "Gotterup"],
+  "T Hatton":     ["Tyrrell Hatton", "Hatton"],
+  "J Rose":       ["Justin Rose", "Rose"],
+  "R McIlroy":    ["Rory McIlroy", "McIlroy"],
+  "S Burns":      ["Sam Burns", "Burns"]
+};
+
+const ROUND = 3; // Round we're tracking
+
+const matchups = [
+  { golfer: "M Homa",       opponent: "R Gerard",     odds: "+100", risk: 25.00, win: 25.00  },
+  { golfer: "L Aberg",      opponent: "S Scheffler",  odds: "+160", risk: 50.00, win: 80.00  },
+  { golfer: "C Young",      opponent: "X Schauffele", odds: "+105", risk: 50.00, win: 52.50  },
+  { golfer: "B Koepka",     opponent: "C Gotterup",   odds: "-110", risk: 50.00, win: 45.45  },
+  { golfer: "J Day",        opponent: "T Hatton",     odds: "-120", risk: 50.00, win: 41.67  },
+  { golfer: "S Lowry",      opponent: "J Rose",       odds: "+105", risk: 75.00, win: 78.75  },
+  { golfer: "T Fleetwood",  opponent: "R McIlroy",    odds: "-110", risk: 50.00, win: 45.45  },
+  { golfer: "P Reed",       opponent: "S Burns",      odds: "-135", risk: 50.00, win: 37.04  }
 ];
 
-let bets = defaultBets.map(b => JSON.parse(JSON.stringify(b)));
+// Live score state
+let liveScores = {}; // keyed by display name, e.g. { "M Homa": { score: -2, thru: 12 }, ... }
+let statuses = matchups.map(() => "pending");
+let lastFetchTime = null;
+
+// Firebase setup
 let db = null;
-let betsRef = null;
+let statusRef = null;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  statusRef = db.ref("masters2026_r3/statuses");
+
+  statusRef.on("value", (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      matchups.forEach((_, i) => {
+        if (data[i] !== undefined) statuses[i] = data[i];
+      });
+    }
+    render();
+  });
+
+  statusRef.once("value", (snapshot) => {
+    if (!snapshot.exists()) {
+      const seed = {};
+      matchups.forEach((_, i) => { seed[i] = "pending"; });
+      statusRef.set(seed);
+    }
+  });
+} catch(e) {
+  console.warn("Firebase init failed:", e);
+}
+
+function setStatus(index, status) {
+  statuses[index] = status;
+  if (statusRef) {
+    statusRef.child(String(index)).set(status);
+  } else {
+    render();
+  }
+}
 
 function formatScore(s) {
   if (s === null || s === undefined) return "-";
@@ -337,119 +349,161 @@ function formatScore(s) {
   return s > 0 ? "+" + s : String(s);
 }
 
-try {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-  betsRef = db.ref("masters2026_r3/bets");
-
-  db.ref(".info/connected").on("value", (snap) => {
-    const el = document.getElementById("connStatus");
-    if (snap.val() === true) {
-      el.textContent = "Live";
-      el.className = "connection-status connected";
-    } else {
-      el.textContent = "Offline";
-      el.className = "connection-status disconnected";
+function findPlayer(displayName, players) {
+  const aliases = PLAYER_LOOKUP[displayName] || [displayName];
+  for (const player of players) {
+    const fullName = (player.first_name || "") + " " + (player.last_name || "");
+    const lastName = player.last_name || "";
+    for (const alias of aliases) {
+      if (fullName === alias || lastName === alias ||
+          fullName.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === alias ||
+          lastName.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === alias) {
+        return player;
+      }
     }
-  });
-
-  betsRef.on("value", (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      bets.forEach((bet, i) => {
-        if (data[i]) {
-          const d = data[i];
-          if (d.status !== undefined) bet.status = d.status;
-          if (d.myScore !== undefined) bet.myScore = d.myScore;
-          if (d.myThru !== undefined) bet.myThru = d.myThru;
-          if (d.opponents) {
-            d.opponents.forEach((opp, j) => {
-              if (bet.opponents[j]) {
-                if (opp.score !== undefined) bet.opponents[j].score = opp.score;
-                if (opp.thru !== undefined) bet.opponents[j].thru = opp.thru;
-              }
-            });
-          }
-        }
-      });
-    }
-    render();
-  });
-
-  betsRef.once("value", (snapshot) => {
-    if (!snapshot.exists()) {
-      const seed = {};
-      defaultBets.forEach((b, i) => {
-        seed[i] = {
-          status: b.status,
-          myScore: b.myScore,
-          myThru: b.myThru,
-          opponents: b.opponents.map(o => ({ score: o.score, thru: o.thru }))
-        };
-      });
-      betsRef.set(seed);
-    }
-  });
-
-} catch(e) {
-  console.warn("Firebase init failed:", e);
-  document.getElementById("connStatus").textContent = "Local Only";
-  render();
+  }
+  return null;
 }
 
-function setStatus(index, status) {
-  bets[index].status = status;
-  if (betsRef) {
-    betsRef.child(String(index)).update({ status });
-  } else {
-    render();
+function calcRoundScore(player) {
+  const roundKey = "round" + ROUND;
+  const roundData = player[roundKey];
+  if (!roundData) return { score: null, thru: null };
+
+  const holes = roundData.holes || [];
+  if (!holes.length) return { score: null, thru: 0 };
+
+  let toPar = 0;
+  let holesPlayed = 0;
+
+  for (let h = 0; h < holes.length; h++) {
+    const holeScore = parseInt(holes[h]);
+    if (isNaN(holeScore) || holeScore === 0) break;
+    toPar += holeScore - PAR[h];
+    holesPlayed++;
   }
+
+  if (holesPlayed === 0) return { score: null, thru: 0 };
+  return { score: toPar, thru: holesPlayed };
+}
+
+async function fetchScores() {
+  const badge = document.getElementById("liveBadge");
+  badge.textContent = "Updating...";
+  badge.className = "live-badge fetching";
+
+  try {
+    // Try direct fetch first
+    let data;
+    try {
+      const resp = await fetch("https://www.masters.com/en_US/scores/feeds/2026/scores.json", { cache: "no-store" });
+      data = await resp.json();
+    } catch(e) {
+      // Fallback: CORS proxy
+      const resp = await fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://www.masters.com/en_US/scores/feeds/2026/scores.json"), { cache: "no-store" });
+      data = await resp.json();
+    }
+
+    const players = data.data?.player || data.player || [];
+    if (!players.length && data.data) {
+      // Try alternate structure
+      for (const key of Object.keys(data.data)) {
+        if (Array.isArray(data.data[key])) {
+          players.push(...data.data[key]);
+          break;
+        }
+      }
+    }
+
+    // Build all names we need to look up
+    const allNames = new Set();
+    matchups.forEach(m => { allNames.add(m.golfer); allNames.add(m.opponent); });
+
+    allNames.forEach(name => {
+      const player = findPlayer(name, players);
+      if (player) {
+        const result = calcRoundScore(player);
+        liveScores[name] = result;
+      }
+    });
+
+    // Auto-determine status when both players finished 18 holes
+    matchups.forEach((m, i) => {
+      const my = liveScores[m.golfer];
+      const opp = liveScores[m.opponent];
+      if (my && opp && my.thru === 18 && opp.thru === 18) {
+        let newStatus;
+        if (my.score < opp.score) newStatus = "won";
+        else if (my.score > opp.score) newStatus = "lost";
+        else newStatus = "push";
+
+        if (statuses[i] !== newStatus) {
+          statuses[i] = newStatus;
+          if (statusRef) statusRef.child(String(i)).set(newStatus);
+        }
+      }
+    });
+
+    lastFetchTime = new Date();
+    badge.textContent = "Live - Auto-updating";
+    badge.className = "live-badge connected";
+
+  } catch(e) {
+    console.error("Score fetch failed:", e);
+    badge.textContent = "Score fetch failed - retrying";
+    badge.className = "live-badge disconnected";
+  }
+
+  render();
 }
 
 function render() {
   const container = document.getElementById("bets");
   container.innerHTML = "";
 
+  // Update timestamp
+  if (lastFetchTime) {
+    const t = lastFetchTime;
+    document.getElementById("lastUpdate").textContent =
+      "Last updated: " + t.toLocaleTimeString() + " (auto-refreshes every 30s)";
+  }
+
   let wins = 0, losses = 0, pushes = 0, pnl = 0;
 
-  bets.forEach((bet, i) => {
-    if (bet.status === "won")  { wins++;   pnl += bet.win; }
-    if (bet.status === "lost") { losses++; pnl -= bet.risk; }
-    if (bet.status === "push") { pushes++; }
+  matchups.forEach((bet, i) => {
+    const status = statuses[i];
+    if (status === "won")  { wins++;   pnl += bet.win; }
+    if (status === "lost") { losses++; pnl -= bet.risk; }
+    if (status === "push") { pushes++; }
 
-    const isFav = bet.odds.startsWith("-");
-    const statusLabel = {
-      pending: "In Progress", won: "Winner", lost: "Loss", push: "Push"
-    }[bet.status];
+    const my = liveScores[bet.golfer] || { score: null, thru: null };
+    const opp = liveScores[bet.opponent] || { score: null, thru: null };
 
-    // Determine best opponent score for comparison
-    const validOppScores = bet.opponents.map(o => o.score).filter(s => s !== null && s !== undefined);
-    const bestOppScore = validOppScores.length > 0 ? Math.min(...validOppScores) : null;
-
-    const myS = bet.myScore;
-    let myClass = "tied";
-    if (myS !== null && bestOppScore !== null) {
-      if (myS < bestOppScore) myClass = "winning";
-      else if (myS > bestOppScore) myClass = "losing";
+    let myClass = "tied", oppClass = "tied";
+    if (my.score !== null && opp.score !== null) {
+      if (my.score < opp.score)      { myClass = "winning"; oppClass = "losing"; }
+      else if (my.score > opp.score) { myClass = "losing";  oppClass = "winning"; }
     }
 
-    let opponentsHTML = "";
-    bet.opponents.forEach((opp, j) => {
-      let oppClass = "tied";
-      if (opp.score !== null && myS !== null) {
-        if (opp.score < myS) oppClass = "winning";
-        else if (opp.score > myS) oppClass = "losing";
-      }
-      if (j > 0) opponentsHTML += '<div class="matchup-vs-badge">&</div>';
-      opponentsHTML += `
-        <div class="matchup-player">
-          <div class="mp-label">Opponent</div>
-          <div class="mp-name">${opp.name}</div>
-          <div class="mp-score ${oppClass}">${formatScore(opp.score)}</div>
-          <div class="mp-thru">${opp.thru !== null ? 'Thru ' + opp.thru : ''}</div>
-        </div>
-      `;
-    });
+    const notStarted = (my.thru === 0 || my.thru === null) && (opp.thru === 0 || opp.thru === null);
+    const finished = my.thru === 18 && opp.thru === 18;
+
+    let statusClass = status;
+    let statusLabel;
+    if (notStarted && status === "pending") {
+      statusClass = "not_started";
+      statusLabel = "Not Started";
+    } else if (finished) {
+      statusLabel = { won: "Winner", lost: "Loss", push: "Push", pending: "Final" }[status];
+    } else {
+      statusLabel = { pending: "In Progress", won: "Winner", lost: "Loss", push: "Push" }[status];
+    }
+
+    const thruText = (thru) => {
+      if (thru === null || thru === 0) return "Not started";
+      if (thru === 18) return "F";
+      return "Thru " + thru;
+    };
 
     const card = document.createElement("div");
     card.className = "bet-card";
@@ -458,26 +512,24 @@ function render() {
         <span class="golfer-name">${bet.golfer} <span style="font-size:0.75rem;color:#888">${bet.odds}</span></span>
         <span class="bet-info">Risk $${bet.risk.toFixed(0)} / Win $${bet.win.toFixed(2)}</span>
       </div>
-      <div class="tee-time">Tee: ${bet.teeTime}</div>
       <div class="matchup-row">
         <div class="matchup-player">
           <div class="mp-label">Your Pick</div>
           <div class="mp-name">${bet.golfer}</div>
-          <div class="mp-score ${myClass}">${formatScore(myS)}</div>
-          <div class="mp-thru">${bet.myThru !== null ? 'Thru ' + bet.myThru : ''}</div>
+          <div class="mp-score ${myClass}">${formatScore(my.score)}</div>
+          <div class="mp-thru">${thruText(my.thru)}</div>
         </div>
         <div class="matchup-vs-badge">VS</div>
-        ${opponentsHTML}
+        <div class="matchup-player">
+          <div class="mp-label">Opponent</div>
+          <div class="mp-name">${bet.opponent}</div>
+          <div class="mp-score ${oppClass}">${formatScore(opp.score)}</div>
+          <div class="mp-thru">${thruText(opp.thru)}</div>
+        </div>
       </div>
-      <div class="status-bar ${bet.status}">
+      <div class="status-bar ${statusClass}">
         <span class="status-dot"></span>
         ${statusLabel}
-      </div>
-      <div class="status-btns">
-        <button class="btn-pending ${bet.status === 'pending' ? 'active' : ''}" onclick="setStatus(${i},'pending')">Pending</button>
-        <button class="btn-won ${bet.status === 'won' ? 'active' : ''}" onclick="setStatus(${i},'won')">Won</button>
-        <button class="btn-lost ${bet.status === 'lost' ? 'active' : ''}" onclick="setStatus(${i},'lost')">Lost</button>
-        <button class="btn-push ${bet.status === 'push' ? 'active' : ''}" onclick="setStatus(${i},'push')">Push</button>
       </div>
     `;
     container.appendChild(card);
@@ -493,6 +545,10 @@ function render() {
   const recEl = document.getElementById("record");
   recEl.className = "value " + (wins > losses ? "positive" : losses > wins ? "negative" : "neutral");
 }
+
+// Initial fetch + auto-refresh every 30 seconds
+fetchScores();
+setInterval(fetchScores, 30000);
 </script>
 
 </body>
