@@ -276,7 +276,7 @@ const PLAYER_LOOKUP = {
   "S Lowry":      ["Shane Lowry", "Lowry"],
   "T Fleetwood":  ["Tommy Fleetwood", "Fleetwood"],
   "P Reed":       ["Patrick Reed", "Reed"],
-  "R Gerard":     ["Robert Gerard", "Bob Gerard", "Gerard"],
+  "R Gerard":     ["Ryan Gerard", "Gerard"],
   "S Scheffler":  ["Scottie Scheffler", "Scheffler"],
   "X Schauffele": ["Xander Schauffele", "Schauffele"],
   "C Gotterup":   ["Chris Gotterup", "Gotterup"],
@@ -352,12 +352,13 @@ function formatScore(s) {
 function findPlayer(displayName, players) {
   const aliases = PLAYER_LOOKUP[displayName] || [displayName];
   for (const player of players) {
-    const fullName = (player.first_name || "") + " " + (player.last_name || "");
-    const lastName = player.last_name || "";
+    // Handle various data structures from the feed
+    const first = player.first_name || player.firstName || player.first || "";
+    const last = player.last_name || player.lastName || player.last || "";
+    const fullName = (first + " " + last).trim();
+    const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     for (const alias of aliases) {
-      if (fullName === alias || lastName === alias ||
-          fullName.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === alias ||
-          lastName.normalize("NFD").replace(/[\u0300-\u036f]/g, "") === alias) {
+      if (norm(fullName) === norm(alias) || norm(last) === norm(alias)) {
         return player;
       }
     }
@@ -370,13 +371,15 @@ function calcRoundScore(player) {
   const roundData = player[roundKey];
   if (!roundData) return { score: null, thru: null };
 
-  const holes = roundData.holes || [];
+  // Try both "scores" and "holes" keys
+  const holes = roundData.scores || roundData.holes || [];
   if (!holes.length) return { score: null, thru: 0 };
 
   let toPar = 0;
   let holesPlayed = 0;
 
   for (let h = 0; h < holes.length; h++) {
+    if (holes[h] === null || holes[h] === undefined) break;
     const holeScore = parseInt(holes[h]);
     if (isNaN(holeScore) || holeScore === 0) break;
     toPar += holeScore - PAR[h];
@@ -404,14 +407,13 @@ async function fetchScores() {
       data = await resp.json();
     }
 
-    const players = data.data?.player || data.player || [];
-    if (!players.length && data.data) {
-      // Try alternate structure
+    let players = [];
+    if (Array.isArray(data.data?.player)) players = data.data.player;
+    else if (Array.isArray(data.player)) players = data.player;
+    else if (Array.isArray(data.data)) players = data.data;
+    else if (data.data) {
       for (const key of Object.keys(data.data)) {
-        if (Array.isArray(data.data[key])) {
-          players.push(...data.data[key]);
-          break;
-        }
+        if (Array.isArray(data.data[key])) { players = data.data[key]; break; }
       }
     }
 
