@@ -525,9 +525,10 @@ function render() {
     if (status === "lost") { losses++; pnl -= bet.risk; }
     if (status === "push") { pushes++; }
 
-    // Count live matchup status
     const my = liveScores[bet.golfer] || { score: null, thru: null };
     const opp = liveScores[bet.opponent] || { score: null, thru: null };
+
+    // Count live matchup status
     if (my.score !== null && opp.score !== null) {
       if (my.score < opp.score) liveWinning++;
       else if (my.score > opp.score) liveLosing++;
@@ -535,9 +536,6 @@ function render() {
     } else {
       liveWaiting++;
     }
-
-    const my = liveScores[bet.golfer] || { score: null, thru: null };
-    const opp = liveScores[bet.opponent] || { score: null, thru: null };
 
     let myClass = "tied", oppClass = "tied";
     if (my.score !== null && opp.score !== null) {
