@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Masters 2026 - 1v1 Matchup Bets</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -142,12 +143,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 16px;
+    padding: 10px 16px;
     font-size: 0.85rem;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
-    gap: 6px;
+    gap: 8px;
   }
 
   .status-bar.pending  { background: #f5f5f5; color: #757575; }
@@ -164,6 +165,34 @@
   .status-bar.lost .status-dot     { background: #ef9a9a; }
   .status-bar.push .status-dot     { background: #ffe0b2; }
 
+  .status-btns {
+    display: flex;
+    gap: 6px;
+    padding: 0 16px 12px;
+    justify-content: center;
+  }
+
+  .status-btns button {
+    border: none;
+    padding: 5px 14px;
+    border-radius: 16px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .status-btns button:hover { opacity: 0.85; transform: scale(1.05); }
+  .status-btns button.active { opacity: 1; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+
+  .status-btns .btn-pending { background: #e0e0e0; color: #555; }
+  .status-btns .btn-won     { background: #4caf50; color: #fff; }
+  .status-btns .btn-lost    { background: #f44336; color: #fff; }
+  .status-btns .btn-push    { background: #ff9800; color: #fff; }
+
   .bet-card .matchup-vs {
     font-size: 0.8rem;
     color: #999;
@@ -175,23 +204,6 @@
     padding: 20px;
     color: #5a8f5a;
     font-size: 0.8rem;
-  }
-
-  .edit-hint {
-    text-align: center;
-    margin-bottom: 16px;
-    font-size: 0.8rem;
-    color: #8cb88c;
-    background: rgba(255,255,255,0.07);
-    border-radius: 8px;
-    padding: 10px;
-  }
-
-  .edit-hint code {
-    background: rgba(255,255,255,0.12);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.78rem;
   }
 
   @media (max-width: 480px) {
@@ -228,9 +240,6 @@
 </div>
 
 <div class="container">
-  <div class="edit-hint">
-    Update results by changing <code>status</code> to <code>"won"</code>, <code>"lost"</code>, or <code>"push"</code> in the bets array below.
-  </div>
   <div id="bets"></div>
 </div>
 
@@ -239,74 +248,38 @@
 </div>
 
 <script>
-// ========== EDIT BET STATUSES HERE ==========
-// Change status to: "pending", "won", "lost", or "push"
-const bets = [
-  {
-    golfer: "M Homa",
-    opponent: "Matchup 7328",
-    odds: "+100",
-    risk: 25.00,
-    win: 25.00,
-    status: "pending"
-  },
-  {
-    golfer: "L Aberg",
-    opponent: "Matchup 7329",
-    odds: "+160",
-    risk: 50.00,
-    win: 80.00,
-    status: "pending"
-  },
-  {
-    golfer: "C Young",
-    opponent: "Matchup 7336",
-    odds: "+105",
-    risk: 50.00,
-    win: 52.50,
-    status: "pending"
-  },
-  {
-    golfer: "B Koepka",
-    opponent: "Matchup 7339",
-    odds: "-110",
-    risk: 50.00,
-    win: 45.45,
-    status: "pending"
-  },
-  {
-    golfer: "J Day",
-    opponent: "Matchup 7341",
-    odds: "-120",
-    risk: 50.00,
-    win: 41.67,
-    status: "pending"
-  },
-  {
-    golfer: "S Lowry",
-    opponent: "Matchup 7346",
-    odds: "+105",
-    risk: 75.00,
-    win: 78.75,
-    status: "pending"
-  },
-  {
-    golfer: "T Fleetwood",
-    opponent: "Matchup 7350",
-    odds: "-110",
-    risk: 50.00,
-    win: 45.45,
-    status: "pending"
-  },
-  {
-    golfer: "P Reed",
-    opponent: "Matchup 7347",
-    odds: "-135",
-    risk: 50.00,
-    win: 37.04,
-    status: "pending"
-  }
+const STORAGE_KEY = "masters2026_bets";
+
+const defaultBets = [
+  { golfer: "M Homa",       opponent: "Matchup 7328", odds: "+100",  risk: 25.00, win: 25.00,  status: "pending" },
+  { golfer: "L Aberg",      opponent: "Matchup 7329", odds: "+160",  risk: 50.00, win: 80.00,  status: "pending" },
+  { golfer: "C Young",      opponent: "Matchup 7336", odds: "+105",  risk: 50.00, win: 52.50,  status: "pending" },
+  { golfer: "B Koepka",     opponent: "Matchup 7339", odds: "-110",  risk: 50.00, win: 45.45,  status: "pending" },
+  { golfer: "J Day",        opponent: "Matchup 7341", odds: "-120",  risk: 50.00, win: 41.67,  status: "pending" },
+  { golfer: "S Lowry",      opponent: "Matchup 7346", odds: "+105",  risk: 75.00, win: 78.75,  status: "pending" },
+  { golfer: "T Fleetwood",  opponent: "Matchup 7350", odds: "-110",  risk: 50.00, win: 45.45,  status: "pending" },
+  { golfer: "P Reed",       opponent: "Matchup 7347", odds: "-135",  risk: 50.00, win: 37.04,  status: "pending" }
 ];
+
+function loadBets() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return defaultBets.map(b => ({...b}));
+}
+
+function saveBets() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(bets)); } catch(e) {}
+}
+
+const bets = loadBets();
+
+function setStatus(index, status) {
+  bets[index].status = status;
+  saveBets();
+  render();
+}
 
 function render() {
   const container = document.getElementById("bets");
@@ -314,7 +287,7 @@ function render() {
 
   let wins = 0, losses = 0, pushes = 0, pnl = 0;
 
-  bets.forEach(bet => {
+  bets.forEach((bet, i) => {
     if (bet.status === "won")  { wins++;   pnl += bet.win; }
     if (bet.status === "lost") { losses++; pnl -= bet.risk; }
     if (bet.status === "push") { pushes++; }
@@ -353,11 +326,16 @@ function render() {
         <span class="status-dot"></span>
         ${statusLabel}
       </div>
+      <div class="status-btns">
+        <button class="btn-pending ${bet.status === 'pending' ? 'active' : ''}" onclick="setStatus(${i},'pending')">Pending</button>
+        <button class="btn-won ${bet.status === 'won' ? 'active' : ''}" onclick="setStatus(${i},'won')">Won</button>
+        <button class="btn-lost ${bet.status === 'lost' ? 'active' : ''}" onclick="setStatus(${i},'lost')">Lost</button>
+        <button class="btn-push ${bet.status === 'push' ? 'active' : ''}" onclick="setStatus(${i},'push')">Push</button>
+      </div>
     `;
     container.appendChild(card);
   });
 
-  // Update summary
   document.getElementById("record").textContent =
     `${wins}-${losses}` + (pushes ? `-${pushes}P` : "");
 
