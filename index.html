@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Masters 2026 - 1v1 Matchup Bets</title>
+<title>PGA Championship 2026 - Bets</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -170,6 +170,22 @@
     padding: 0 16px 6px;
   }
 
+  .bet-card .bet-type {
+    display: inline-block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #fff;
+    background: #0d4f0d;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin: 0 16px 4px;
+  }
+
+  .bet-card .bet-type.total {
+    background: #1565c0;
+  }
+
   .footer {
     text-align: center;
     padding: 20px;
@@ -204,18 +220,18 @@
 <body>
 
 <header>
-  <h1>The Masters 2026</h1>
-  <div class="subtitle">1v1 Matchup Bets &mdash; Round 2 (Fri 4/11)</div>
+  <h1>PGA Championship 2026</h1>
+  <div class="subtitle">3rd Round Bets &mdash; Aronimink GC (Sat 5/16)</div>
 </header>
 
 <div class="summary-bar">
   <div class="summary-item">
     <div class="label">Plays</div>
-    <div class="value neutral" id="totalPlays">8</div>
+    <div class="value neutral" id="totalPlays">6</div>
   </div>
   <div class="summary-item">
     <div class="label">Total Risk</div>
-    <div class="value neutral" id="totalRisk">$400.00</div>
+    <div class="value neutral" id="totalRisk">$150.00</div>
   </div>
   <div class="summary-item">
     <div class="label">Record</div>
@@ -235,7 +251,7 @@
 </div>
 
 <div class="footer">
-  All bets placed 4/10/2026 @ 8:56 PM &bull; BetDiablo
+  All bets placed 5/16/2026 @ 9:06 AM &bull; BetDiablo
 </div>
 
 <script>
@@ -243,67 +259,57 @@
 // Change status to: "pending", "won", "lost", or "push"
 const bets = [
   {
-    golfer: "M Homa",
-    opponent: "Matchup 7328",
-    odds: "+100",
+    type: "Money Line",
+    golfer: "J Rahm",
+    opponent: "vs S Scheffler",
+    odds: "+135",
     risk: 25.00,
-    win: 25.00,
+    win: 33.75,
     status: "pending"
   },
   {
-    golfer: "L Aberg",
-    opponent: "Matchup 7329",
-    odds: "+160",
-    risk: 50.00,
-    win: 80.00,
+    type: "Money Line",
+    golfer: "K Kitayama",
+    opponent: "vs P Cantlay",
+    odds: "+110",
+    risk: 25.00,
+    win: 27.50,
     status: "pending"
   },
   {
-    golfer: "C Young",
-    opponent: "Matchup 7336",
-    odds: "+105",
-    risk: 50.00,
-    win: 52.50,
+    type: "Money Line",
+    golfer: "H Matsuyama",
+    opponent: "vs M Woo Lee",
+    odds: "+110",
+    risk: 25.00,
+    win: 27.50,
     status: "pending"
   },
   {
-    golfer: "B Koepka",
-    opponent: "Matchup 7339",
-    odds: "-110",
-    risk: 50.00,
-    win: 45.45,
+    type: "Money Line",
+    golfer: "A Potgieter",
+    opponent: "vs A Smalley",
+    odds: "+135",
+    risk: 25.00,
+    win: 33.75,
     status: "pending"
   },
   {
-    golfer: "J Day",
-    opponent: "Matchup 7341",
-    odds: "-120",
-    risk: 50.00,
-    win: 41.67,
+    type: "Total",
+    golfer: "P Cantlay",
+    opponent: "3rd Round Score Over 70½",
+    odds: "+115",
+    risk: 25.00,
+    win: 28.75,
     status: "pending"
   },
   {
-    golfer: "S Lowry",
-    opponent: "Matchup 7346",
-    odds: "+105",
-    risk: 75.00,
-    win: 78.75,
-    status: "pending"
-  },
-  {
-    golfer: "T Fleetwood",
-    opponent: "Matchup 7350",
-    odds: "-110",
-    risk: 50.00,
-    win: 45.45,
-    status: "pending"
-  },
-  {
-    golfer: "P Reed",
-    opponent: "Matchup 7347",
-    odds: "-135",
-    risk: 50.00,
-    win: 37.04,
+    type: "Total",
+    golfer: "J Thomas",
+    opponent: "3rd Round Score Over 70½",
+    odds: "+120",
+    risk: 25.00,
+    win: 30.00,
     status: "pending"
   }
 ];
@@ -329,11 +335,13 @@ function render() {
 
     const card = document.createElement("div");
     card.className = "bet-card";
+    const typeClass = bet.type === "Total" ? "total" : "moneyline";
     card.innerHTML = `
       <div class="card-header">
         <span class="golfer-name">${bet.golfer}</span>
         <span class="odds ${isFav ? 'favorite' : ''}">${bet.odds}</span>
       </div>
+      <span class="bet-type ${typeClass}">${bet.type}</span>
       <div class="matchup-vs">${bet.opponent}</div>
       <div class="card-body">
         <div class="stat">
