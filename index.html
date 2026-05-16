@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Masters 2026 - 1v1 Matchup Bets</title>
+<title>PGA Championship 2026 - Bets</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -218,6 +218,57 @@
     flex-shrink: 0;
   }
 
+  .bet-type-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #fff;
+    background: #0d4f0d;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .bet-type-badge.total { background: #1565c0; }
+
+  .total-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 6px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+  }
+
+  .total-row .tr-block .tr-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: #999;
+    letter-spacing: 0.5px;
+  }
+
+  .total-row .tr-block .tr-value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #333;
+    margin-top: 2px;
+  }
+
+  .total-row .tr-block .tr-value.winning { color: #2e7d32; }
+  .total-row .tr-block .tr-value.losing  { color: #c62828; }
+  .total-row .tr-block .tr-value.tied    { color: #f57f17; }
+
+  .total-row .tr-block .tr-sub {
+    font-size: 0.62rem;
+    color: #999;
+    margin-top: 1px;
+  }
+
   .bet-card .status-bar {
     display: flex;
     align-items: center;
@@ -263,19 +314,19 @@
 <body>
 
 <header>
-  <h1>The Masters 2026</h1>
-  <div class="subtitle">Round 3 Matchup Bets &mdash; Sat 4/11</div>
+  <h1>PGA Championship 2026</h1>
+  <div class="subtitle">Round 3 Bets &mdash; Aronimink GC, Sat 5/16</div>
   <div class="live-badge disconnected" id="liveBadge">Connecting...</div>
 </header>
 
 <div class="summary-bar">
   <div class="summary-item">
     <div class="label">Plays</div>
-    <div class="value neutral" id="totalPlays">8</div>
+    <div class="value neutral" id="totalPlays">6</div>
   </div>
   <div class="summary-item">
     <div class="label">Total Risk</div>
-    <div class="value neutral" id="totalRisk">$400.00</div>
+    <div class="value neutral" id="totalRisk">$150.00</div>
   </div>
   <div class="summary-item">
     <div class="label">Record</div>
@@ -299,7 +350,7 @@
 </div>
 
 <div class="footer">
-  All bets placed 4/10/2026 @ 8:56 PM &bull; BetDiablo &bull; Scores auto-refresh every 30s
+  All bets placed 5/16/2026 @ 9:06 AM &bull; BetDiablo &bull; Scores auto-refresh every 30s
 </div>
 
 <script>
@@ -313,45 +364,38 @@ const firebaseConfig = {
   appId: "1:680427486559:web:8ab722fcb6a299d44e8aea"
 };
 
-// Augusta National par for each hole
-const PAR = [4,5,4,3,4,3,4,5,4, 4,4,3,5,4,5,3,4,4]; // holes 1-18
+// Aronimink GC par total (Round 3 PGA Championship 2026)
+const PAR_TOTAL = 70;
 
-// Player name mappings: display name -> possible names in masters.com feed
+// Player name mappings: display name -> possible names in ESPN feed
 const PLAYER_LOOKUP = {
-  "M Homa":       ["Max Homa", "Homa"],
-  "L Aberg":      ["Ludvig Åberg", "Ludvig Aberg", "Åberg", "Aberg"],
-  "C Young":      ["Cameron Young", "Young"],
-  "B Koepka":     ["Brooks Koepka", "Koepka"],
-  "J Day":        ["Jason Day", "Day"],
-  "S Lowry":      ["Shane Lowry", "Lowry"],
-  "T Fleetwood":  ["Tommy Fleetwood", "Fleetwood"],
-  "P Reed":       ["Patrick Reed", "Reed"],
-  "R Gerard":     ["Ryan Gerard", "Gerard"],
-  "S Scheffler":  ["Scottie Scheffler", "Scheffler"],
-  "X Schauffele": ["Xander Schauffele", "Schauffele"],
-  "C Gotterup":   ["Chris Gotterup", "Gotterup"],
-  "T Hatton":     ["Tyrrell Hatton", "Hatton"],
-  "J Rose":       ["Justin Rose", "Rose"],
-  "R McIlroy":    ["Rory McIlroy", "McIlroy"],
-  "S Burns":      ["Sam Burns", "Burns"]
+  "J Rahm":      ["Jon Rahm", "Rahm"],
+  "S Scheffler": ["Scottie Scheffler", "Scheffler"],
+  "K Kitayama":  ["Kurt Kitayama", "Kitayama"],
+  "P Cantlay":   ["Patrick Cantlay", "Cantlay"],
+  "H Matsuyama": ["Hideki Matsuyama", "Matsuyama"],
+  "M Woo Lee":   ["Min Woo Lee", "M.W. Lee", "Lee"],
+  "A Potgieter": ["Aldrich Potgieter", "Potgieter"],
+  "A Smalley":   ["Alex Smalley", "Smalley"],
+  "J Thomas":    ["Justin Thomas", "Thomas"]
 };
 
 const ROUND = 3; // Round we're tracking
+const EVENT_ID = "401811947"; // ESPN event id for 2026 PGA Championship
 
-const matchups = [
-  { golfer: "M Homa",       opponent: "R Gerard",     odds: "+100", risk: 25.00, win: 25.00  },
-  { golfer: "L Aberg",      opponent: "S Scheffler",  odds: "+160", risk: 50.00, win: 80.00  },
-  { golfer: "C Young",      opponent: "X Schauffele", odds: "+105", risk: 50.00, win: 52.50  },
-  { golfer: "B Koepka",     opponent: "C Gotterup",   odds: "-110", risk: 50.00, win: 45.45  },
-  { golfer: "J Day",        opponent: "T Hatton",     odds: "-120", risk: 50.00, win: 41.67  },
-  { golfer: "S Lowry",      opponent: "J Rose",       odds: "+105", risk: 75.00, win: 78.75  },
-  { golfer: "T Fleetwood",  opponent: "R McIlroy",    odds: "-110", risk: 50.00, win: 45.45  },
-  { golfer: "P Reed",       opponent: "S Burns",      odds: "-135", risk: 50.00, win: 37.04  }
+// Mixed bet types: matchup (head-to-head) and total (round-score over/under)
+const bets = [
+  { type: "matchup", golfer: "J Rahm",      opponent: "S Scheffler", odds: "+135", risk: 25.00, win: 33.75 },
+  { type: "matchup", golfer: "K Kitayama",  opponent: "P Cantlay",   odds: "+110", risk: 25.00, win: 27.50 },
+  { type: "matchup", golfer: "H Matsuyama", opponent: "M Woo Lee",   odds: "+110", risk: 25.00, win: 27.50 },
+  { type: "matchup", golfer: "A Potgieter", opponent: "A Smalley",   odds: "+135", risk: 25.00, win: 33.75 },
+  { type: "total",   golfer: "P Cantlay",   line: 70.5, side: "over", odds: "+115", risk: 25.00, win: 28.75 },
+  { type: "total",   golfer: "J Thomas",    line: 70.5, side: "over", odds: "+120", risk: 25.00, win: 30.00 }
 ];
 
-// Live score state
-let liveScores = {}; // keyed by display name, e.g. { "M Homa": { score: -2, thru: 12 }, ... }
-let statuses = matchups.map(() => "pending");
+// Live score state: { golferName: { strokes, toPar, thru } }
+let liveScores = {};
+let statuses = bets.map(() => "pending");
 let lastFetchTime = null;
 
 // Firebase setup
@@ -361,12 +405,12 @@ let statusRef = null;
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.database();
-  statusRef = db.ref("masters2026_r3/statuses");
+  statusRef = db.ref("pga2026_r3/statuses");
 
   statusRef.on("value", (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      matchups.forEach((_, i) => {
+      bets.forEach((_, i) => {
         if (data[i] !== undefined) statuses[i] = data[i];
       });
     }
@@ -376,7 +420,7 @@ try {
   statusRef.once("value", (snapshot) => {
     if (!snapshot.exists()) {
       const seed = {};
-      matchups.forEach((_, i) => { seed[i] = "pending"; });
+      bets.forEach((_, i) => { seed[i] = "pending"; });
       statusRef.set(seed);
     }
   });
@@ -399,45 +443,67 @@ function formatScore(s) {
   return s > 0 ? "+" + s : String(s);
 }
 
-function findPlayer(displayName, players) {
+function normName(s) {
+  return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function findCompetitor(displayName, competitors) {
   const aliases = PLAYER_LOOKUP[displayName] || [displayName];
-  for (const player of players) {
-    // Handle various data structures from the feed
-    const first = player.first_name || player.firstName || player.first || "";
-    const last = player.last_name || player.lastName || player.last || "";
-    const fullName = (first + " " + last).trim();
-    const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  for (const c of competitors) {
+    const athlete = c.athlete || {};
+    const full = athlete.fullName || athlete.displayName || "";
+    const last = (full.split(" ").slice(-1)[0]) || "";
+    const fullN = normName(full);
+    const lastN = normName(last);
     for (const alias of aliases) {
-      if (norm(fullName) === norm(alias) || norm(last) === norm(alias)) {
-        return player;
-      }
+      const a = normName(alias);
+      if (fullN === a || lastN === a) return c;
     }
   }
   return null;
 }
 
-function calcRoundScore(player) {
-  const roundKey = "round" + ROUND;
-  const roundData = player[roundKey];
-  if (!roundData) return { score: null, thru: null };
+function parseToPar(dv) {
+  if (dv === undefined || dv === null) return null;
+  if (dv === "E") return 0;
+  if (dv === "-" || dv === "") return null;
+  const n = parseFloat(dv);
+  return isNaN(n) ? null : n;
+}
 
-  // Try both "scores" and "holes" keys
-  const holes = roundData.scores || roundData.holes || [];
-  if (!holes.length) return { score: null, thru: 0 };
+function getRoundData(competitor, round) {
+  const rounds = competitor.linescores || [];
+  const roundLs = rounds.find(r => r.period === round);
+  if (!roundLs) return { strokes: null, toPar: null, thru: 0 };
 
+  // Sum per-hole linescores while round in progress
+  const holes = Array.isArray(roundLs.linescores) ? roundLs.linescores : [];
+  let strokes = 0;
   let toPar = 0;
-  let holesPlayed = 0;
+  let thru = 0;
+  let haveToPar = false;
 
-  for (let h = 0; h < holes.length; h++) {
-    if (holes[h] === null || holes[h] === undefined) break;
-    const holeScore = parseInt(holes[h]);
-    if (isNaN(holeScore) || holeScore === 0) break;
-    toPar += holeScore - PAR[h];
-    holesPlayed++;
+  for (const h of holes) {
+    const v = parseFloat(h.value);
+    if (!v || isNaN(v) || v === 0) break;
+    strokes += v;
+    const tp = parseToPar(h.scoreType && h.scoreType.displayValue);
+    if (tp !== null) { toPar += tp; haveToPar = true; }
+    thru++;
   }
 
-  if (holesPlayed === 0) return { score: null, thru: 0 };
-  return { score: toPar, thru: holesPlayed };
+  // If we got holes, use them
+  if (thru > 0) {
+    return { strokes, toPar: haveToPar ? toPar : null, thru };
+  }
+
+  // Else fall back to round-level totals (round complete, no hole detail in feed)
+  const rv = parseFloat(roundLs.value);
+  if (rv > 0) {
+    return { strokes: rv, toPar: parseToPar(roundLs.displayValue), thru: 18 };
+  }
+
+  return { strokes: null, toPar: null, thru: 0 };
 }
 
 async function fetchScores() {
@@ -445,54 +511,65 @@ async function fetchScores() {
   badge.textContent = "Updating...";
   badge.className = "live-badge fetching";
 
+  const feedUrl = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?event=" + EVENT_ID;
+
   try {
-    // Try direct fetch first
     let data;
     try {
-      const resp = await fetch("https://www.masters.com/en_US/scores/feeds/2026/scores.json", { cache: "no-store" });
+      const resp = await fetch(feedUrl, { cache: "no-store" });
       data = await resp.json();
     } catch(e) {
-      // Fallback: CORS proxy
-      const resp = await fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://www.masters.com/en_US/scores/feeds/2026/scores.json"), { cache: "no-store" });
+      const resp = await fetch("https://corsproxy.io/?url=" + encodeURIComponent(feedUrl), { cache: "no-store" });
       data = await resp.json();
     }
 
-    let players = [];
-    if (Array.isArray(data.data?.player)) players = data.data.player;
-    else if (Array.isArray(data.player)) players = data.player;
-    else if (Array.isArray(data.data)) players = data.data;
-    else if (data.data) {
-      for (const key of Object.keys(data.data)) {
-        if (Array.isArray(data.data[key])) { players = data.data[key]; break; }
-      }
-    }
+    // Find competitors array
+    const events = data.events || [];
+    const event = events.find(e => String(e.id) === EVENT_ID) || events[0];
+    const competitors = event?.competitions?.[0]?.competitors || [];
 
-    // Build all names we need to look up
+    // Collect names we need from all bet types
     const allNames = new Set();
-    matchups.forEach(m => { allNames.add(m.golfer); allNames.add(m.opponent); });
-
-    allNames.forEach(name => {
-      const player = findPlayer(name, players);
-      if (player) {
-        const result = calcRoundScore(player);
-        liveScores[name] = result;
-      }
+    bets.forEach(b => {
+      allNames.add(b.golfer);
+      if (b.opponent) allNames.add(b.opponent);
     });
 
-    // Auto-determine status when both players finished 18 holes
-    matchups.forEach((m, i) => {
-      const my = liveScores[m.golfer];
-      const opp = liveScores[m.opponent];
-      if (my && opp && my.thru === 18 && opp.thru === 18) {
-        let newStatus;
-        if (my.score < opp.score) newStatus = "won";
-        else if (my.score > opp.score) newStatus = "lost";
-        else newStatus = "push";
+    allNames.forEach(name => {
+      const c = findCompetitor(name, competitors);
+      if (c) liveScores[name] = getRoundData(c, ROUND);
+    });
 
-        if (statuses[i] !== newStatus) {
-          statuses[i] = newStatus;
-          if (statusRef) statusRef.child(String(i)).set(newStatus);
+    // Auto-determine status when round is complete
+    bets.forEach((b, i) => {
+      const my = liveScores[b.golfer];
+      if (!my) return;
+
+      let newStatus = null;
+      if (b.type === "matchup") {
+        const opp = liveScores[b.opponent];
+        if (my.thru === 18 && opp && opp.thru === 18) {
+          if (my.toPar !== null && opp.toPar !== null) {
+            if (my.toPar < opp.toPar)      newStatus = "won";
+            else if (my.toPar > opp.toPar) newStatus = "lost";
+            else                           newStatus = "push";
+          } else if (my.strokes !== null && opp.strokes !== null) {
+            if (my.strokes < opp.strokes)      newStatus = "won";
+            else if (my.strokes > opp.strokes) newStatus = "lost";
+            else                               newStatus = "push";
+          }
         }
+      } else if (b.type === "total") {
+        if (my.thru === 18 && my.strokes !== null) {
+          const over = my.strokes > b.line;
+          if (b.side === "over")  newStatus = over ? "won" : "lost";
+          if (b.side === "under") newStatus = over ? "lost" : "won";
+        }
+      }
+
+      if (newStatus && statuses[i] !== newStatus) {
+        statuses[i] = newStatus;
+        if (statusRef) statusRef.child(String(i)).set(newStatus);
       }
     });
 
@@ -524,77 +601,156 @@ function render() {
   let liveWinning = 0, liveLosing = 0, liveTied = 0, liveWaiting = 0;
   let expectedPnl = 0;
 
-  matchups.forEach((bet, i) => {
+  const thruText = (thru) => {
+    if (thru === null || thru === 0) return "Not started";
+    if (thru === 18) return "F";
+    return "Thru " + thru;
+  };
+
+  bets.forEach((bet, i) => {
     const status = statuses[i];
     if (status === "won")  { wins++;   pnl += bet.win; }
     if (status === "lost") { losses++; pnl -= bet.risk; }
     if (status === "push") { pushes++; }
 
-    const my = liveScores[bet.golfer] || { score: null, thru: null };
-    const opp = liveScores[bet.opponent] || { score: null, thru: null };
-
-    // Count live matchup status and expected payout
-    if (my.score !== null && opp.score !== null) {
-      if (my.score < opp.score)      { liveWinning++; expectedPnl += bet.win; }
-      else if (my.score > opp.score) { liveLosing++;  expectedPnl -= bet.risk; }
-      else                           { liveTied++; }
-    } else {
-      liveWaiting++;
-    }
-
-    let myClass = "tied", oppClass = "tied";
-    if (my.score !== null && opp.score !== null) {
-      if (my.score < opp.score)      { myClass = "winning"; oppClass = "losing"; }
-      else if (my.score > opp.score) { myClass = "losing";  oppClass = "winning"; }
-    }
-
-    const notStarted = (my.thru === 0 || my.thru === null) && (opp.thru === 0 || opp.thru === null);
-    const finished = my.thru === 18 && opp.thru === 18;
-
-    let statusClass = status;
-    let statusLabel;
-    if (notStarted && status === "pending") {
-      statusClass = "not_started";
-      statusLabel = "Not Started";
-    } else if (finished) {
-      statusLabel = { won: "Winner", lost: "Loss", push: "Push", pending: "Final" }[status];
-    } else {
-      statusLabel = { pending: "In Progress", won: "Winner", lost: "Loss", push: "Push" }[status];
-    }
-
-    const thruText = (thru) => {
-      if (thru === null || thru === 0) return "Not started";
-      if (thru === 18) return "F";
-      return "Thru " + thru;
-    };
-
     const card = document.createElement("div");
     card.className = "bet-card";
-    card.innerHTML = `
-      <div class="card-header">
-        <span class="golfer-name">${bet.golfer} <span style="font-size:0.75rem;color:#888">${bet.odds}</span></span>
-        <span class="bet-info">Risk $${bet.risk.toFixed(0)} / Win $${bet.win.toFixed(2)}</span>
-      </div>
-      <div class="matchup-row">
-        <div class="matchup-player">
-          <div class="mp-label">Your Pick</div>
-          <div class="mp-name">${bet.golfer}</div>
-          <div class="mp-score ${myClass}">${formatScore(my.score)}</div>
-          <div class="mp-thru">${thruText(my.thru)}</div>
+
+    if (bet.type === "matchup") {
+      const my = liveScores[bet.golfer] || { strokes: null, toPar: null, thru: 0 };
+      const opp = liveScores[bet.opponent] || { strokes: null, toPar: null, thru: 0 };
+
+      // Pick the comparison axis: to-par if available for both, else strokes
+      const myCmp = my.toPar !== null ? my.toPar : my.strokes;
+      const oppCmp = opp.toPar !== null ? opp.toPar : opp.strokes;
+      const haveBoth = myCmp !== null && oppCmp !== null;
+
+      if (haveBoth) {
+        if (myCmp < oppCmp)      { liveWinning++; expectedPnl += bet.win; }
+        else if (myCmp > oppCmp) { liveLosing++;  expectedPnl -= bet.risk; }
+        else                     { liveTied++; }
+      } else {
+        liveWaiting++;
+      }
+
+      let myClass = "tied", oppClass = "tied";
+      if (haveBoth) {
+        if (myCmp < oppCmp)      { myClass = "winning"; oppClass = "losing"; }
+        else if (myCmp > oppCmp) { myClass = "losing";  oppClass = "winning"; }
+      }
+
+      const notStarted = (!my.thru) && (!opp.thru);
+      const finished = my.thru === 18 && opp.thru === 18;
+
+      let statusClass = status;
+      let statusLabel;
+      if (notStarted && status === "pending") {
+        statusClass = "not_started"; statusLabel = "Not Started";
+      } else if (finished) {
+        statusLabel = { won: "Winner", lost: "Loss", push: "Push", pending: "Final" }[status];
+      } else {
+        statusLabel = { pending: "In Progress", won: "Winner", lost: "Loss", push: "Push" }[status];
+      }
+
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="golfer-name">${bet.golfer} <span style="font-size:0.75rem;color:#888">${bet.odds}</span><span class="bet-type-badge">Money Line</span></span>
+          <span class="bet-info">Risk $${bet.risk.toFixed(0)} / Win $${bet.win.toFixed(2)}</span>
         </div>
-        <div class="matchup-vs-badge">VS</div>
-        <div class="matchup-player">
-          <div class="mp-label">Opponent</div>
-          <div class="mp-name">${bet.opponent}</div>
-          <div class="mp-score ${oppClass}">${formatScore(opp.score)}</div>
-          <div class="mp-thru">${thruText(opp.thru)}</div>
+        <div class="matchup-row">
+          <div class="matchup-player">
+            <div class="mp-label">Your Pick</div>
+            <div class="mp-name">${bet.golfer}</div>
+            <div class="mp-score ${myClass}">${formatScore(my.toPar)}</div>
+            <div class="mp-thru">${thruText(my.thru)}</div>
+          </div>
+          <div class="matchup-vs-badge">VS</div>
+          <div class="matchup-player">
+            <div class="mp-label">Opponent</div>
+            <div class="mp-name">${bet.opponent}</div>
+            <div class="mp-score ${oppClass}">${formatScore(opp.toPar)}</div>
+            <div class="mp-thru">${thruText(opp.thru)}</div>
+          </div>
         </div>
-      </div>
-      <div class="status-bar ${statusClass}">
-        <span class="status-dot"></span>
-        ${statusLabel}
-      </div>
-    `;
+        <div class="status-bar ${statusClass}">
+          <span class="status-dot"></span>
+          ${statusLabel}
+        </div>
+      `;
+    } else if (bet.type === "total") {
+      const my = liveScores[bet.golfer] || { strokes: null, toPar: null, thru: 0 };
+
+      // Projected stroke total: if we have to-par + thru, project pace; otherwise scale strokes
+      let projected = null;
+      if (my.thru >= 1 && my.strokes !== null) {
+        if (my.toPar !== null) {
+          // Use pace-of-to-par: assumes remaining holes finish at par
+          projected = Math.round(PAR_TOTAL + (my.toPar / my.thru) * 18);
+        } else {
+          projected = Math.round((my.strokes / my.thru) * 18);
+        }
+      }
+      const finalStrokes = my.thru === 18 ? my.strokes : null;
+
+      // Determine live winning status using projection vs line
+      const winsIfOver = bet.side === "over";
+      let liveStatus = null;
+      if (finalStrokes !== null) {
+        liveStatus = (finalStrokes > bet.line) === winsIfOver ? "winning" : "losing";
+      } else if (projected !== null) {
+        liveStatus = (projected > bet.line) === winsIfOver ? "winning" : "losing";
+      }
+
+      if (liveStatus === "winning")      { liveWinning++; expectedPnl += bet.win; }
+      else if (liveStatus === "losing")  { liveLosing++;  expectedPnl -= bet.risk; }
+      else                               { liveWaiting++; }
+
+      const notStarted = !my.thru;
+      let statusClass = status;
+      let statusLabel;
+      if (notStarted && status === "pending") {
+        statusClass = "not_started"; statusLabel = "Not Started";
+      } else if (my.thru === 18) {
+        statusLabel = { won: "Winner", lost: "Loss", push: "Push", pending: "Final" }[status];
+      } else {
+        statusLabel = { pending: "In Progress", won: "Winner", lost: "Loss", push: "Push" }[status];
+      }
+
+      const sideLabel = bet.side === "over" ? "Over" : "Under";
+      const lineStr = Number.isInteger(bet.line) ? bet.line : bet.line.toString().replace(".5", "½");
+      const strokeValueClass =
+        liveStatus === "winning" ? "winning" :
+        liveStatus === "losing"  ? "losing"  : "tied";
+
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="golfer-name">${bet.golfer} <span style="font-size:0.75rem;color:#888">${bet.odds}</span><span class="bet-type-badge total">Total</span></span>
+          <span class="bet-info">Risk $${bet.risk.toFixed(0)} / Win $${bet.win.toFixed(2)}</span>
+        </div>
+        <div class="total-row">
+          <div class="tr-block">
+            <div class="tr-label">R${ROUND} Strokes</div>
+            <div class="tr-value ${strokeValueClass}">${my.strokes !== null ? my.strokes : "-"}</div>
+            <div class="tr-sub">${thruText(my.thru)}</div>
+          </div>
+          <div class="tr-block">
+            <div class="tr-label">Projected</div>
+            <div class="tr-value ${strokeValueClass}">${projected !== null ? projected : "-"}</div>
+            <div class="tr-sub">${my.toPar !== null ? formatScore(my.toPar) + " thru " + my.thru : "&nbsp;"}</div>
+          </div>
+          <div class="tr-block">
+            <div class="tr-label">Line</div>
+            <div class="tr-value">${sideLabel} ${lineStr}</div>
+            <div class="tr-sub">need ${bet.side === "over" ? ">" : "<"} ${bet.line}</div>
+          </div>
+        </div>
+        <div class="status-bar ${statusClass}">
+          <span class="status-dot"></span>
+          ${statusLabel}
+        </div>
+      `;
+    }
+
     container.appendChild(card);
   });
 
