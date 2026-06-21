@@ -372,7 +372,9 @@ const PLAYER_LOOKUP = {
   "J Rose":      ["Justin Rose", "Rose"],
   "A Bhatia":    ["Akshay Bhatia", "Bhatia"],
   "S Scheffler": ["Scottie Scheffler", "Scheffler"],
-  "W Clark":     ["Wyndham Clark", "Clark"]
+  "W Clark":     ["Wyndham Clark", "Clark"],
+  "J Thomas":    ["Justin Thomas", "Thomas"],
+  "A Rai":       ["Aaron Rai", "Rai"]
 };
 
 const ROUND = 4; // Round we're tracking
@@ -381,8 +383,8 @@ const EVENT_ID = "401811952"; // ESPN event id for 2026 US Open
 // Mixed bet types: matchup (head-to-head) and total (round-score over/under)
 // NOTE: matchup opponents marked "TBD" until confirmed from book.
 const bets = [
-  { type: "matchup", golfer: "J Rose",      opponent: "TBD",          odds: "+105", risk: 25.00, win: 26.25 },
-  { type: "matchup", golfer: "A Bhatia",    opponent: "TBD",          odds: "+105", risk: 25.00, win: 26.25 },
+  { type: "matchup", golfer: "J Rose",      opponent: "J Thomas",      odds: "+105", risk: 25.00, win: 26.25 },
+  { type: "matchup", golfer: "A Bhatia",    opponent: "A Rai",         odds: "+105", risk: 25.00, win: 26.25 },
   { type: "total",   golfer: "S Scheffler", line: 70.5, side: "under", odds: "-170", risk: 50.00, win: 29.41 },
   { type: "total",   golfer: "W Clark",     line: 72.5, side: "over",  odds: "+100", risk: 50.00, win: 50.00 }
 ];
