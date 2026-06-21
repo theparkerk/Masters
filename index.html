@@ -398,37 +398,63 @@ let lastFetchTime = null;
 let db = null;
 let statusRef = null;
 
+const onFirebaseError = (e) => {
+  console.warn("Firebase status sync unavailable, falling back to localStorage:", e && e.message);
+  statusRef = null;
+  // Hydrate from localStorage if present
+  try {
+    const cached = JSON.parse(localStorage.getItem("usopen2026_r4_statuses") || "null");
+    if (cached) bets.forEach((_, i) => { if (cached[i] !== undefined) statuses[i] = cached[i]; });
+  } catch(_) {}
+  render();
+};
+
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.database();
   statusRef = db.ref("usopen2026_r4/statuses");
 
-  statusRef.on("value", (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      bets.forEach((_, i) => {
-        if (data[i] !== undefined) statuses[i] = data[i];
-      });
-    }
-    render();
-  });
+  statusRef.on(
+    "value",
+    (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        bets.forEach((_, i) => {
+          if (data[i] !== undefined) statuses[i] = data[i];
+        });
+      }
+      render();
+    },
+    onFirebaseError
+  );
 
-  statusRef.once("value", (snapshot) => {
-    if (!snapshot.exists()) {
-      const seed = {};
-      bets.forEach((_, i) => { seed[i] = "pending"; });
-      statusRef.set(seed);
-    }
-  });
+  statusRef.once("value")
+    .then((snapshot) => {
+      if (!snapshot.exists()) {
+        const seed = {};
+        bets.forEach((_, i) => { seed[i] = "pending"; });
+        statusRef.set(seed).catch(onFirebaseError);
+      }
+    })
+    .catch(onFirebaseError);
 } catch(e) {
-  console.warn("Firebase init failed:", e);
+  onFirebaseError(e);
+}
+
+function persistStatuses() {
+  try {
+    const map = {};
+    bets.forEach((_, i) => { map[i] = statuses[i]; });
+    localStorage.setItem("usopen2026_r4_statuses", JSON.stringify(map));
+  } catch(_) {}
 }
 
 function setStatus(index, status) {
   statuses[index] = status;
   if (statusRef) {
-    statusRef.child(String(index)).set(status);
+    statusRef.child(String(index)).set(status).catch(() => persistStatuses());
   } else {
+    persistStatuses();
     render();
   }
 }
@@ -533,7 +559,20 @@ async function fetchScores() {
 
     allNames.forEach(name => {
       const c = findCompetitor(name, competitors);
-      if (c) liveScores[name] = getRoundData(c, ROUND);
+      if (!c) return;
+      const current = getRoundData(c, ROUND);
+      const prev = ROUND > 1 ? getRoundData(c, ROUND - 1) : null;
+      // R4 tee time lives in stats[6].displayValue on the round linescore
+      let teeTime = null;
+      const rounds = c.linescores || [];
+      const roundLs = rounds.find(r => r.period === ROUND);
+      const teeStat = roundLs && roundLs.statistics && roundLs.statistics.categories &&
+        roundLs.statistics.categories[0] && roundLs.statistics.categories[0].stats &&
+        roundLs.statistics.categories[0].stats[6];
+      if (teeStat && teeStat.displayValue && teeStat.displayValue.match(/\d/)) {
+        teeTime = teeStat.displayValue;
+      }
+      liveScores[name] = { ...current, prev, teeTime };
     });
 
     // Auto-determine status when round is complete
@@ -603,6 +642,23 @@ function render() {
     return "Thru " + thru;
   };
 
+  // Pretty-print an ESPN tee time like "Sun Jun 21 11:24:00 PDT 2026" -> "Tee 11:24 AM PDT"
+  const teeTimeText = (raw) => {
+    if (!raw) return "";
+    const m = raw.match(/(\d{1,2}):(\d{2}):\d{2}\s+([A-Z]{2,4})/);
+    if (!m) return "Tee " + raw;
+    let h = parseInt(m[1], 10);
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = ((h + 11) % 12) + 1;
+    return "Tee " + h + ":" + m[2] + " " + ampm + " " + m[3];
+  };
+
+  const prevSummary = (prev) => {
+    if (!prev || prev.strokes === null) return "";
+    const tp = prev.toPar !== null ? " (" + formatScore(prev.toPar) + ")" : "";
+    return "R" + (ROUND - 1) + ": " + prev.strokes + tp;
+  };
+
   bets.forEach((bet, i) => {
     const status = statuses[i];
     if (status === "won")  { wins++;   pnl += bet.win; }
@@ -648,6 +704,11 @@ function render() {
         statusLabel = { pending: "In Progress", won: "Winner", lost: "Loss", push: "Push" }[status];
       }
 
+      const mySub = my.thru ? thruText(my.thru) : (teeTimeText(my.teeTime) || thruText(my.thru));
+      const oppSub = opp.thru ? thruText(opp.thru) : (teeTimeText(opp.teeTime) || thruText(opp.thru));
+      const myPrev = prevSummary(my.prev);
+      const oppPrev = prevSummary(opp.prev);
+
       card.innerHTML = `
         <div class="card-header">
           <span class="golfer-name">${bet.golfer} <span style="font-size:0.75rem;color:#888">${bet.odds}</span><span class="bet-type-badge">Money Line</span></span>
@@ -658,14 +719,16 @@ function render() {
             <div class="mp-label">Your Pick</div>
             <div class="mp-name">${bet.golfer}</div>
             <div class="mp-score ${myClass}">${formatScore(my.toPar)}</div>
-            <div class="mp-thru">${thruText(my.thru)}</div>
+            <div class="mp-thru">${mySub}</div>
+            ${myPrev ? `<div class="mp-thru" style="margin-top:1px;opacity:0.75">${myPrev}</div>` : ""}
           </div>
           <div class="matchup-vs-badge">VS</div>
           <div class="matchup-player">
             <div class="mp-label">Opponent</div>
             <div class="mp-name">${bet.opponent}</div>
             <div class="mp-score ${oppClass}">${formatScore(opp.toPar)}</div>
-            <div class="mp-thru">${thruText(opp.thru)}</div>
+            <div class="mp-thru">${oppSub}</div>
+            ${oppPrev ? `<div class="mp-thru" style="margin-top:1px;opacity:0.75">${oppPrev}</div>` : ""}
           </div>
         </div>
         <div class="status-bar ${statusClass}">
@@ -718,6 +781,13 @@ function render() {
         liveStatus === "winning" ? "winning" :
         liveStatus === "losing"  ? "losing"  : "tied";
 
+      const strokesSub = my.thru
+        ? thruText(my.thru)
+        : (teeTimeText(my.teeTime) || "Not started");
+      const projSub = my.toPar !== null
+        ? formatScore(my.toPar) + " thru " + my.thru
+        : (prevSummary(my.prev) || "&nbsp;");
+
       card.innerHTML = `
         <div class="card-header">
           <span class="golfer-name">${bet.golfer} <span style="font-size:0.75rem;color:#888">${bet.odds}</span><span class="bet-type-badge total">Total</span></span>
@@ -727,12 +797,12 @@ function render() {
           <div class="tr-block">
             <div class="tr-label">R${ROUND} Strokes</div>
             <div class="tr-value ${strokeValueClass}">${my.strokes !== null ? my.strokes : "-"}</div>
-            <div class="tr-sub">${thruText(my.thru)}</div>
+            <div class="tr-sub">${strokesSub}</div>
           </div>
           <div class="tr-block">
             <div class="tr-label">Projected</div>
             <div class="tr-value ${strokeValueClass}">${projected !== null ? projected : "-"}</div>
-            <div class="tr-sub">${my.toPar !== null ? formatScore(my.toPar) + " thru " + my.thru : "&nbsp;"}</div>
+            <div class="tr-sub">${projSub}</div>
           </div>
           <div class="tr-block">
             <div class="tr-label">Line</div>
