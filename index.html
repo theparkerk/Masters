@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PGA Championship 2026 - Bets</title>
+<title>US Open 2026 - Bets</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -314,15 +314,15 @@
 <body>
 
 <header>
-  <h1>PGA Championship 2026</h1>
-  <div class="subtitle">Round 3 Bets &mdash; Aronimink GC, Sat 5/16</div>
+  <h1>US Open 2026</h1>
+  <div class="subtitle">Final Round Bets &mdash; Sun 6/21</div>
   <div class="live-badge disconnected" id="liveBadge">Connecting...</div>
 </header>
 
 <div class="summary-bar">
   <div class="summary-item">
     <div class="label">Plays</div>
-    <div class="value neutral" id="totalPlays">6</div>
+    <div class="value neutral" id="totalPlays">4</div>
   </div>
   <div class="summary-item">
     <div class="label">Total Risk</div>
@@ -350,7 +350,7 @@
 </div>
 
 <div class="footer">
-  All bets placed 5/16/2026 @ 9:06 AM &bull; BetDiablo &bull; Scores auto-refresh every 30s
+  All bets placed 6/21/2026 @ 6:55 AM &bull; BetDiablo &bull; Scores auto-refresh every 30s
 </div>
 
 <script>
@@ -364,33 +364,27 @@ const firebaseConfig = {
   appId: "1:680427486559:web:8ab722fcb6a299d44e8aea"
 };
 
-// Aronimink GC par total (Round 3 PGA Championship 2026)
+// Course par total (US Open 2026 final round)
 const PAR_TOTAL = 70;
 
 // Player name mappings: display name -> possible names in ESPN feed
 const PLAYER_LOOKUP = {
-  "J Rahm":      ["Jon Rahm", "Rahm"],
+  "J Rose":      ["Justin Rose", "Rose"],
+  "A Bhatia":    ["Akshay Bhatia", "Bhatia"],
   "S Scheffler": ["Scottie Scheffler", "Scheffler"],
-  "K Kitayama":  ["Kurt Kitayama", "Kitayama"],
-  "P Cantlay":   ["Patrick Cantlay", "Cantlay"],
-  "H Matsuyama": ["Hideki Matsuyama", "Matsuyama"],
-  "M Woo Lee":   ["Min Woo Lee", "M.W. Lee", "Lee"],
-  "A Potgieter": ["Aldrich Potgieter", "Potgieter"],
-  "A Smalley":   ["Alex Smalley", "Smalley"],
-  "J Thomas":    ["Justin Thomas", "Thomas"]
+  "W Clark":     ["Wyndham Clark", "Clark"]
 };
 
-const ROUND = 3; // Round we're tracking
-const EVENT_ID = "401811947"; // ESPN event id for 2026 PGA Championship
+const ROUND = 4; // Round we're tracking
+const EVENT_ID = "401811952"; // ESPN event id for 2026 US Open
 
 // Mixed bet types: matchup (head-to-head) and total (round-score over/under)
+// NOTE: matchup opponents marked "TBD" until confirmed from book.
 const bets = [
-  { type: "matchup", golfer: "J Rahm",      opponent: "S Scheffler", odds: "+135", risk: 25.00, win: 33.75 },
-  { type: "matchup", golfer: "K Kitayama",  opponent: "P Cantlay",   odds: "+110", risk: 25.00, win: 27.50 },
-  { type: "matchup", golfer: "H Matsuyama", opponent: "M Woo Lee",   odds: "+110", risk: 25.00, win: 27.50 },
-  { type: "matchup", golfer: "A Potgieter", opponent: "A Smalley",   odds: "+135", risk: 25.00, win: 33.75 },
-  { type: "total",   golfer: "P Cantlay",   line: 70.5, side: "over", odds: "+115", risk: 25.00, win: 28.75 },
-  { type: "total",   golfer: "J Thomas",    line: 70.5, side: "over", odds: "+120", risk: 25.00, win: 30.00 }
+  { type: "matchup", golfer: "J Rose",      opponent: "TBD",          odds: "+105", risk: 25.00, win: 26.25 },
+  { type: "matchup", golfer: "A Bhatia",    opponent: "TBD",          odds: "+105", risk: 25.00, win: 26.25 },
+  { type: "total",   golfer: "S Scheffler", line: 70.5, side: "under", odds: "-170", risk: 50.00, win: 29.41 },
+  { type: "total",   golfer: "W Clark",     line: 72.5, side: "over",  odds: "+100", risk: 50.00, win: 50.00 }
 ];
 
 // Live score state: { golferName: { strokes, toPar, thru } }
@@ -405,7 +399,7 @@ let statusRef = null;
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.database();
-  statusRef = db.ref("pga2026_r3/statuses");
+  statusRef = db.ref("usopen2026_r4/statuses");
 
   statusRef.on("value", (snapshot) => {
     const data = snapshot.val();
